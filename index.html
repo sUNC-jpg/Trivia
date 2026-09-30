@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trivia IQ - Ultimate General Knowledge Quiz</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Custom Scrollbar & Animations */
+    body {
+      font-family: 'Inter', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+    }
+    .dark .glass-card {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .animate-pulse-ring {
+      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    /* Confetti Canvas Overlay */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Top Navigation / Header -->
+  <header class="w-full max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-3 cursor-pointer" onclick="app.showHome()">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+        <i class="fa-solid fa-brain text-xl"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-xl leading-tight bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent">Trivia IQ</h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Master the Knowledge</p>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-2 sm:space-x-4">
+      <button id="sound-toggle-btn" onclick="app.toggleSound()" class="p-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition" title="Toggle Sound">
+        <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+      </button>
+      <button onclick="app.toggleTheme()" class="p-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition" title="Toggle Dark/Light Mode">
+        <i class="fa-solid fa-moon dark:hidden"></i>
+        <i class="fa-solid fa-sun hidden dark:inline"></i>
+      </button>
+      <button onclick="app.showRanks()" class="p-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition flex items-center gap-2"><i class="fa-solid fa-ranking-star"></i><span class="hidden sm:inline text-sm font-medium">Ranks</span></button>
+      <button onclick="app.showStats()" class="p-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition flex items-center gap-2">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span class="hidden sm:inline text-sm font-medium">Stats</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="w-full max-w-4xl mx-auto px-4 py-6 flex-grow flex flex-col justify-center">
+
+    <!-- VIEW 1: HOME / MODE SELECTION -->
+    <section id="view-home" class="space-y-8 animate-fadeIn">
+      <div class="text-center space-y-3">
+        <span class="px-3 py-1 text-xs font-semibold tracking-wider text-brand-600 dark:text-brand-400 uppercase bg-brand-50 dark:bg-brand-900/40 rounded-full border border-brand-200 dark:border-brand-800">
+          General Knowledge Quiz
+        </span>
+        <h2 class="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+          Test Your Brainpower
+        </h2>
+        <p class="text-slate-600 dark:text-slate-400 max-w-xl mx-auto text-sm sm:text-base">
+          Challenge yourself across Science, History, Pop Culture, Geography, and more. Choose your game mode below!
+        </p>
+      </div>
+
+      <div class="glass-card border border-slate-200 dark:border-slate-800 rounded-2xl p-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        <label class="space-y-1"><span class="font-semibold text-slate-500">Player name</span><input id="pf-name" maxlength="16" placeholder="Guest" onchange="app.saveProfile()" class="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"></label>
+        <label class="space-y-1"><span class="font-semibold text-slate-500">Country</span><select id="pf-country" onchange="app.saveProfile()" class="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"></select></label>
+        <label class="space-y-1"><span class="font-semibold text-slate-500">Category</span><select id="f-cat" class="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"></select></label>
+        <label class="space-y-1"><span class="font-semibold text-slate-500">Question type</span><select id="f-type" class="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"><option value="">Mixed (random)</option><option value="mc">Multiple choice</option><option value="tf">True or false</option><option value="id">Identification</option></select></label>
+      </div>
+      <p class="text-center text-xs text-slate-500 -mt-4"><b id="bank-count"></b> questions loaded &middot; new math &amp; logic puzzles every visit</p>
+
+      <!-- Game Mode Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Standard Mode -->
+        <div onclick="app.startQuiz('standard')" class="glass-card border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:border-brand-500 dark:hover:border-brand-500 transition-all cursor-pointer hover:-translate-y-1 shadow-md hover:shadow-xl group relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition text-brand-600 dark:text-brand-400">
+            <i class="fa-solid fa-list-check text-8xl"></i>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Standard Quiz</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">10 carefully selected questions across diverse topics. Take your time to think.</p>
+          <span class="inline-flex items-center text-xs font-semibold text-brand-600 dark:text-brand-400 group-hover:translate-x-1 transition-transform">
+            Play Classic <i class="fa-solid fa-arrow-right ml-1"></i>
+          </span>
+        </div>
+
+        <!-- Time Attack Mode -->
+        <div onclick="app.startQuiz('timeAttack')" class="glass-card border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:border-amber-500 dark:hover:border-amber-500 transition-all cursor-pointer hover:-translate-y-1 shadow-md hover:shadow-xl group relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition text-amber-500">
+            <i class="fa-solid fa-bolt text-8xl"></i>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-bolt"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Time Attack</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">60 seconds on the clock! Answer as many questions correctly as you can.</p>
+          <span class="inline-flex items-center text-xs font-semibold text-amber-500 group-hover:translate-x-1 transition-transform">
+            Beat the Clock <i class="fa-solid fa-arrow-right ml-1"></i>
+          </span>
+        </div>
+
+        <!-- Survival Mode -->
+        <div onclick="app.startQuiz('survival')" class="glass-card border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:border-rose-500 dark:hover:border-rose-500 transition-all cursor-pointer hover:-translate-y-1 shadow-md hover:shadow-xl group relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition text-rose-500">
+            <i class="fa-solid fa-shield-heart text-8xl"></i>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-shield-heart"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Endless Survival</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">You have 3 lives. Difficulty increases as you progress. How far can you go?</p>
+          <span class="inline-flex items-center text-xs font-semibold text-rose-500 group-hover:translate-x-1 transition-transform">
+            Start Survival <i class="fa-solid fa-arrow-right ml-1"></i>
+          </span>
+        </div>
+      </div>
+
+      <!-- Quick Category Pills -->
+      <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 text-center mb-3">CATEGORIES INCLUDED</p>
+        <div class="flex flex-wrap justify-center gap-2 text-xs">
+          <span class="px-3 py-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300"><i class="fa-solid fa-flask mr-1 text-emerald-500"></i> Science</span>
+          <span class="px-3 py-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300"><i class="fa-solid fa-landmark mr-1 text-amber-500"></i> History</span>
+          <span class="px-3 py-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300"><i class="fa-solid fa-earth-americas mr-1 text-blue-500"></i> Geography</span>
+          <span class="px-3 py-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300"><i class="fa-solid fa-film mr-1 text-purple-500"></i> Pop Culture</span>
+          <span class="px-3 py-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300"><i class="fa-solid fa-book mr-1 text-rose-500"></i> Literature</span>
+          <span class="px-3 py-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300"><i class="fa-solid fa-microchip mr-1 text-cyan-500"></i> Tech</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: ACTIVE QUIZ -->
+    <section id="view-quiz" class="hidden space-y-6">
+      <!-- Quiz Status Header -->
+      <div class="glass-card border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+        <div class="flex items-center space-x-3">
+          <span id="quiz-category-badge" class="px-3 py-1 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400 text-xs font-semibold uppercase flex items-center gap-1.5">
+            <i class="fa-solid fa-tag"></i> General
+          </span>
+          <span id="quiz-difficulty-badge" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold uppercase">
+            Easy
+          </span>
+        </div>
+
+        <div class="flex items-center space-x-6 text-sm font-semibold">
+          <!-- Lives (Survival Mode Only) -->
+          <div id="quiz-lives-container" class="hidden items-center text-rose-500 gap-1">
+            <i class="fa-solid fa-heart"></i>
+            <span id="quiz-lives-count">3</span>
+          </div>
+
+          <!-- Timer Bar (Time Attack / Standard) -->
+          <div id="quiz-timer-container" class="flex items-center space-x-2 text-slate-700 dark:text-slate-300">
+            <i class="fa-regular fa-clock text-brand-500"></i>
+            <span id="quiz-timer-text" class="font-mono text-base">00:00</span>
+          </div>
+
+          <!-- Streak Counter -->
+          <div class="flex items-center text-amber-500 gap-1">
+            <i class="fa-solid fa-fire animate-bounce"></i>
+            <span id="quiz-streak-count">0</span>
+          </div>
+
+          <!-- Score Counter -->
+          <div class="text-slate-900 dark:text-white">
+            Score: <span id="quiz-score-count" class="text-brand-600 dark:text-brand-400 font-bold">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Indicator -->
+      <div class="space-y-1">
+        <div class="flex justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+          <span id="quiz-progress-text">Question 1 of 10</span>
+          <span id="quiz-percentage-text">0% Completed</span>
+        </div>
+        <div class="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div id="quiz-progress-bar" class="h-full bg-gradient-to-r from-brand-600 to-indigo-500 transition-all duration-300 rounded-full" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Question Box -->
+      <div class="glass-card border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-md">
+        <h3 id="quiz-question-text" class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-snug">
+          Loading Question...
+        </h3>
+
+        <!-- Option Buttons Grid -->
+        <div id="quiz-options-container" class="grid grid-cols-1 gap-3">
+          <!-- Dynamic options appended here -->
+        </div>
+        <div id="quiz-id-container" class="hidden flex gap-2">
+          <input id="quiz-id-input" autocomplete="off" placeholder="Type your answer and press Enter..." class="flex-1 px-4 py-3 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-slate-300 dark:border-slate-700 text-sm sm:text-base">
+          <button onclick="app.submitId()" class="px-5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm">Submit</button>
+        </div>
+
+        <!-- Explanation Footer (Hidden initially) -->
+        <div id="quiz-explanation-box" class="hidden p-4 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 space-y-2 text-sm animate-fadeIn">
+          <div id="quiz-explanation-title" class="font-bold flex items-center gap-2">
+            <!-- Correct / Incorrect banner -->
+          </div>
+          <p id="quiz-explanation-text" class="text-slate-600 dark:text-slate-300 text-xs sm:text-sm">
+            Explanation goes here.
+          </p>
+          <div class="pt-2 flex justify-end">
+            <button id="quiz-next-btn" onclick="app.nextQuestion()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs sm:text-sm transition flex items-center gap-2 shadow-lg shadow-brand-500/20">
+              Next Question <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: SUMMARY / RESULT SCREEN -->
+    <section id="view-summary" class="hidden space-y-8 animate-fadeIn">
+      <div class="glass-card border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-10 text-center space-y-6 shadow-xl relative overflow-hidden">
+        
+        <!-- Score Badge Icon -->
+        <div class="inline-flex p-4 rounded-3xl bg-brand-500/10 text-brand-600 dark:text-brand-400 text-5xl mb-2">
+          <i id="summary-badge-icon" class="fa-solid fa-trophy"></i>
+        </div>
+
+        <div class="space-y-2">
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">Quiz Completed!</h2>
+          <p id="summary-feedback-text" class="text-slate-600 dark:text-slate-400 text-sm sm:text-base max-w-md mx-auto">
+            Outstanding performance! You know your stuff.
+          </p>
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 py-2">
+          <div class="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Final Score</p>
+            <p id="summary-final-score" class="text-2xl font-black text-brand-600 dark:text-brand-400 mt-1">0</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Accuracy</p>
+            <p id="summary-accuracy" class="text-2xl font-black text-emerald-500 mt-1">0%</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Best Streak</p>
+            <p id="summary-best-streak" class="text-2xl font-black text-amber-500 mt-1">0</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Correct / Total</p>
+            <p id="summary-correct-ratio" class="text-2xl font-black text-indigo-500 mt-1">0/10</p>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-3 pt-4">
+          <button onclick="app.startQuiz(app.currentMode)" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition shadow-lg shadow-brand-500/25 flex items-center gap-2">
+            <i class="fa-solid fa-rotate-right"></i> Play Again
+          </button>
+          <button onclick="app.toggleReviewSection()" class="px-6 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-magnifying-glass"></i> Review Answers
+          </button>
+          <button onclick="app.shareResults()" class="px-6 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-share-nodes"></i> Share Score
+          </button>
+        </div>
+      </div>
+
+      <!-- Detailed Review Accordion Section (Hidden by default) -->
+      <div id="summary-review-section" class="hidden space-y-4">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-brand-500"></i> Question Breakdown
+        </h3>
+        <div id="summary-review-container" class="space-y-3">
+          <!-- Dynamically populated review cards -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: STATS & DASHBOARD -->
+    <section id="view-stats" class="hidden space-y-6 animate-fadeIn">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">Performance Stats</h2>
+          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Tracked locally across all game sessions.</p>
+        </div>
+        <button onclick="app.showHome()" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 transition">
+          <i class="fa-solid fa-arrow-left mr-1"></i> Back Home
+        </button>
+      </div>
+
+      <!-- Overview Cards Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="glass-card p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Played</p>
+          <p id="stats-total-games" class="text-3xl font-black text-slate-900 dark:text-white mt-1">0</p>
+        </div>
+        <div class="glass-card p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Overall Accuracy</p>
+          <p id="stats-overall-accuracy" class="text-3xl font-black text-emerald-500 mt-1">0%</p>
+        </div>
+        <div class="glass-card p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Highest Streak</p>
+          <p id="stats-highest-streak" class="text-3xl font-black text-amber-500 mt-1">0</p>
+        </div>
+        <div class="glass-card p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Score</p>
+          <p id="stats-total-score" class="text-3xl font-black text-brand-500 mt-1">0</p>
+        </div>
+      </div>
+
+      <!-- Category Breakdown Card -->
+      <div class="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+        <h3 class="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-chart-column text-brand-500"></i> Category Mastery
+        </h3>
+        <div id="stats-category-bars" class="space-y-3">
+          <!-- Dynamically populated category progress bars -->
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="app.resetStats()" class="text-xs text-rose-500 hover:text-rose-600 font-medium transition flex items-center gap-1">
+          <i class="fa-solid fa-trash-can"></i> Reset All Data
+        </button>
+      </div>
+    </section>
+
+    <!-- VIEW 5: RANKINGS -->
+    <section id="view-ranks" class="hidden space-y-4 animate-fadeIn">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">Leaderboards</h2>
+        <button onclick="app.showHome()" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs sm:text-sm font-semibold"><i class="fa-solid fa-arrow-left mr-1"></i> Back Home</button>
+      </div>
+      <div class="flex flex-wrap gap-2"><button class="rk-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800" data-k="scope" data-v="global" onclick="app.setRank(this.dataset.k,this.dataset.v)">Global</button><button class="rk-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800" data-k="scope" data-v="country" onclick="app.setRank(this.dataset.k,this.dataset.v)">My Country</button><button class="rk-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800" data-k="scope" data-v="countries" onclick="app.setRank(this.dataset.k,this.dataset.v)">Country vs Country</button><span class="w-4"></span><button class="rk-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800" data-k="period" data-v="daily" onclick="app.setRank(this.dataset.k,this.dataset.v)">Daily</button><button class="rk-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800" data-k="period" data-v="weekly" onclick="app.setRank(this.dataset.k,this.dataset.v)">Weekly</button><button class="rk-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800" data-k="period" data-v="all" onclick="app.setRank(this.dataset.k,this.dataset.v)">All-time</button></div>
+      <label class="text-xs text-slate-500 flex items-center gap-2"><input type="checkbox" id="rk-demo" checked onchange="app.renderRanks()"> Include demo players (sample data so boards aren't empty)</label>
+      <div id="rk-me" class="text-sm font-semibold text-brand-600 dark:text-brand-400"></div>
+      <div id="rk-table" class="glass-card border border-slate-200 dark:border-slate-800 rounded-2xl overflow-x-auto"></div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full max-w-5xl mx-auto px-4 py-6 text-center text-xs text-slate-400 dark:text-slate-600 border-t border-slate-200 dark:border-slate-900 mt-6">
+    <p>Trivia IQ &copy; Designed for GitHub Pages. Built with HTML5, Tailwind CSS, and Web Audio API.</p>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 text-xs font-semibold z-50">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
+    <span id="toast-message">Notification message</span>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. SYNTHESIZED AUDIO ENGINE (Web Audio API)
+       ========================================================================== */
+    class AudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+      }
+
+      playCorrect() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
+
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.4);
+      }
+
+      playIncorrect() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now); // A3
+        osc.frequency.exponentialRampToValueAtTime(164.81, now + 0.2); // E3
+
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+
+      playClick() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.05);
+      }
+    }
+
+    /* ==========================================================================
+       2. CONFETTI EFFECT SYSTEM
+       ========================================================================== */
+    class Confetti {
+      constructor() {
+        this.canvas = document.getElementById('confetti-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.animating = false;
+        this.resize();
+
+        window.addEventListener('resize', () => this.resize());
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+
+      fire() {
+        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+        for (let i = 0; i < 90; i++) {
+          this.particles.push({
+            x: this.canvas.width / 2,
+            y: this.canvas.height / 2,
+            vx: (Math.random() - 0.5) * 14,
+            vy: (Math.random() - 0.7) * 14,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            size: Math.random() * 8 + 4,
+            rotation: Math.random() * 360,
+            rotationSpeed: (Math.random() - 0.5) * 10,
+            opacity: 1
+          });
+        }
+
+        if (!this.animating) {
+          this.animating = true;
+          this.loop();
+        }
+      }
+
+      loop() {
+        if (!this.animating) return;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.particles.forEach((p, idx) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.25; // gravity
+          p.opacity -= 0.015;
+          p.rotation += p.rotationSpeed;
+
+          this.ctx.save();
+          this.ctx.globalAlpha = Math.max(0, p.opacity);
+          this.ctx.translate(p.x, p.y);
+          this.ctx.rotate((p.rotation * Math.PI) / 180);
+          this.ctx.fillStyle = p.color;
+          this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          this.ctx.restore();
+
+          if (p.opacity <= 0) {
+            this.particles.splice(idx, 1);
+          }
+        });
+
+        if (this.particles.length > 0) {
+          requestAnimationFrame(() => this.loop());
+        } else {
+          this.animating = false;
+        }
+      }
+    }
+
+    /* ==========================================================================
+       3. COMPREHENSIVE QUESTION BANK
+       ========================================================================== */
+    const BASE_BANK = [
+      // Science
+      {
+        id: 's1',
+        category: 'Science',
+        difficulty: 'Easy',
+        question: 'What is the chemical symbol for Gold?',
+        options: ['Au', 'Ag', 'Fe', 'Gd'],
+        answer: 0,
+        explanation: 'Au comes from the Latin word for gold, "aurum".'
+      },
+      {
+        id: 's2',
+        category: 'Science',
+        difficulty: 'Medium',
+        question: 'Which planet in our solar system has the most moons?',
+        options: ['Jupiter', 'Saturn', 'Neptune', 'Uranus'],
+        answer: 1,
+        explanation: 'Saturn leads with over 140 confirmed moons, surpassing Jupiter.'
+      },
+      {
+        id: 's3',
+        category: 'Science',
+        difficulty: 'Hard',
+        question: 'What is the speed of light in a vacuum approximately?',
+        options: ['300,000 km/s', '150,000 km/s', '1,000,000 km/s', '500,000 km/s'],
+        answer: 0,
+        explanation: 'Light travels at approximately 299,792 kilometers per second (or 300,000 km/s).'
+      },
+      {
+        id: 's4',
+        category: 'Science',
+        difficulty: 'Easy',
+        question: 'What powerhouse organelle generates most of the ATP in eukaryotic cells?',
+        options: ['Ribosome', 'Mitochondria', 'Golgi Apparatus', 'Nucleus'],
+        answer: 1,
+        explanation: 'Mitochondria produce ATP through cellular respiration, often dubbed the powerhouses of the cell.'
+      },
+
+      // History
+      {
+        id: 'h1',
+        category: 'History',
+        difficulty: 'Easy',
+        question: 'Who was the first President of the United States?',
+        options: ['Thomas Jefferson', 'John Adams', 'George Washington', 'Benjamin Franklin'],
+        answer: 2,
+        explanation: 'George Washington served as the first U.S. President from 1789 to 1797.'
+      },
+      {
+        id: 'h2',
+        category: 'History',
+        difficulty: 'Medium',
+        question: 'In which year did the Titanic sink?',
+        options: ['1912', '1905', '1918', '1923'],
+        answer: 0,
+        explanation: 'The RMS Titanic struck an iceberg and sank on April 15, 1912.'
+      },
+      {
+        id: 'h3',
+        category: 'History',
+        difficulty: 'Hard',
+        question: 'Which ancient empire was ruled by Cyrus the Great?',
+        options: ['Roman Empire', 'Achaemenid (Persian) Empire', 'Ottoman Empire', 'Byzantine Empire'],
+        answer: 1,
+        explanation: 'Cyrus the Great founded the Achaemenid Empire, the first Persian Empire.'
+      },
+
+      // Geography
+      {
+        id: 'g1',
+        category: 'Geography',
+        difficulty: 'Easy',
+        question: 'What is the largest ocean on Earth?',
+        options: ['Atlantic Ocean', 'Indian Ocean', 'Pacific Ocean', 'Arctic Ocean'],
+        answer: 2,
+        explanation: 'The Pacific Ocean covers over 30% of the Earth’s total surface area.'
+      },
+      {
+        id: 'g2',
+        category: 'Geography',
+        difficulty: 'Medium',
+        question: 'What is the capital city of Australia?',
+        options: ['Sydney', 'Melbourne', 'Canberra', 'Brisbane'],
+        answer: 2,
+        explanation: 'Canberra was chosen as the capital in 1908 as a compromise between Sydney and Melbourne.'
+      },
+      {
+        id: 'g3',
+        category: 'Geography',
+        difficulty: 'Hard',
+        question: 'Which landlocked country lies entirely within South Africa?',
+        options: ['Swaziland (Eswatini)', 'Lesotho', 'Botswana', 'Namibia'],
+        answer: 1,
+        explanation: 'Lesotho is an enclaved nation completely surrounded by South Africa.'
+      },
+
+      // Pop Culture & Entertainment
+      {
+        id: 'p1',
+        category: 'Pop Culture',
+        difficulty: 'Easy',
+        question: 'Which band originally recorded the song "Yellow Submarine"?',
+        options: ['The Rolling Stones', 'The Beatles', 'Queen', 'The Who'],
+        answer: 1,
+        explanation: 'The Beatles released "Yellow Submarine" on their 1966 album Revolver.'
+      },
+      {
+        id: 'p2',
+        category: 'Pop Culture',
+        difficulty: 'Medium',
+        question: 'Who painted the famous artwork "The Starry Night"?',
+        options: ['Pablo Picasso', 'Claude Monet', 'Vincent van Gogh', 'Salvador Dalí'],
+        answer: 2,
+        explanation: 'Vincent van Gogh painted The Starry Night in June 1889 while at Saint-Rémy-de-Provence.'
+      },
+
+      // Literature
+      {
+        id: 'l1',
+        category: 'Literature',
+        difficulty: 'Medium',
+        question: 'Who wrote the classic dystopian novel "1984"?',
+        options: ['Aldous Huxley', 'George Orwell', 'Ray Bradbury', 'HG Wells'],
+        answer: 1,
+        explanation: 'George Orwell published "1984" in 1949 as a warning against totalitarianism.'
+      },
+
+      // Technology
+      {
+        id: 't1',
+        category: 'Technology',
+        difficulty: 'Easy',
+        question: 'What does "CPU" stand for in computing?',
+        options: ['Central Processing Unit', 'Computer Power Unit', 'Core Processing Utility', 'Central Program Unit'],
+        answer: 0,
+        explanation: 'The CPU performs basic arithmetic, logic, controlling, and input/output operations.'
+      },
+      {
+        id: 't2',
+        category: 'Technology',
+        difficulty: 'Hard',
+        question: 'In what year was the Python programming language first released?',
+        options: ['1991', '1985', '1995', '2001'],
+        answer: 0,
+        explanation: 'Guido van Rossum released Python 0.9.0 in February 1991.'
+      }
+    ];
+
+    /* ==========================================================================
+       3b. QUESTION GENERATOR (multiple choice, true/false, identification)
+       ========================================================================== */
+    const QUESTION_BANK = BASE_BANK.map(q => ({ ...q, type: 'mc', ansText: q.options[q.answer] }));
+    const rnd = n => Math.floor(Math.random() * n);
+    const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const sample = (a, k) => shuffle(a).slice(0, k);
+    const cap = s => s[0].toUpperCase() + s.slice(1);
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\b(the|a|an)\b/g, ' ').replace(/\s+/g, ' ').trim();
+    const lev = (a, b) => { const d = Array.from({ length: a.length + 1 }, (_, i) => [i]); for (let j = 1; j <= b.length; j++) d[0][j] = j; for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1)); return d[a.length][b.length]; };
+    const matches = (t, acc) => { t = norm(t); return !!t && acc.some(x => { x = norm(x); return t === x || (x.length >= 6 && !/\d/.test(x) && lev(t, x) <= (x.length >= 10 ? 2 : 1)); }); };
+    const near = (n, k) => { const r = Math.max(3, Math.min(30, Math.round(n * .1))), s = new Set(); let g = 0; while (s.size < k && g++ < 99) { const v = n + (Math.random() < .5 ? -1 : 1) * (1 + rnd(r)); if (v !== n && v > 0) s.add(v); } return [...s].map(String); };
+    const roman = n => [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']].reduce((s, [v, r]) => { while (n >= v) { s += r; n -= v; } return s; }, '');
+    const UP = { Easy: 'Medium', Medium: 'Hard', Hard: 'Hard' };
+    let _gid = 0;
+
+    // One fact -> 4 questions: multiple choice, true, false, identification.
+    function add(cat, diff, q, st, ans, dis, acc) {
+      const push = o => QUESTION_BANK.push({ id: 'g' + (++_gid), category: cat, ...o });
+      push({ type: 'mc', difficulty: diff, question: q, options: shuffle([ans, ...dis()]), ansText: ans, explanation: st(ans) });
+      push({ type: 'tf', difficulty: diff, question: st(ans), options: ['True', 'False'], answer: 0, ansText: 'True', explanation: 'That statement is true.' });
+      push({ type: 'tf', difficulty: diff, question: st(dis()[0]), options: ['True', 'False'], answer: 1, ansText: 'False', explanation: 'False. Correct version: ' + st(ans) });
+      push({ type: 'id', difficulty: UP[diff], question: q, accept: acc, explanation: st(ans) });
+    }
+    // rows: "subject>answer/alias;..."  ({s} = subject, {a} = answer in templates)
+    function pairs(cat, diff, qt, st, rows) {
+      const it = rows.split(';').map(r => r.split('>')), pool = [...new Set(it.map(r => r[1].split('/')[0]))], person = /^Who/.test(qt);
+      it.forEach(([s, a]) => {
+        s = s.split('/')[0]; const al = a.split('/'), ans = al[0], num = /^\d+$/.test(ans), acc = [...al], last = ans.split(' ').pop();
+        if (person && ans.includes(' ') && last.length > 3) acc.push(last);
+        add(cat, diff, qt.replace('{s}', s), x => cap(st.replace('{s}', s).replace('{a}', x)), ans, () => num ? near(+ans, 3) : sample(pool.filter(p => p !== ans), 3), acc);
+      });
+    }
+
+    const CAPS = 'France>Paris;Germany>Berlin;Italy>Rome;Spain>Madrid;Portugal>Lisbon;United Kingdom>London;Ireland>Dublin;Netherlands>Amsterdam;Belgium>Brussels;Switzerland>Bern;Austria>Vienna;Poland>Warsaw;Czechia>Prague;Hungary>Budapest;Romania>Bucharest;Bulgaria>Sofia;Greece>Athens;Turkey>Ankara;Ukraine>Kyiv;Russia>Moscow;Norway>Oslo;Sweden>Stockholm;Finland>Helsinki;Denmark>Copenhagen;Iceland>Reykjavik;Croatia>Zagreb;Serbia>Belgrade;Slovakia>Bratislava;Slovenia>Ljubljana;Lithuania>Vilnius;Latvia>Riga;Estonia>Tallinn;Belarus>Minsk;Albania>Tirana;Japan>Tokyo;China>Beijing;South Korea>Seoul;North Korea>Pyongyang;India>New Delhi/Delhi;Pakistan>Islamabad;Bangladesh>Dhaka;Nepal>Kathmandu;Thailand>Bangkok;Vietnam>Hanoi;Cambodia>Phnom Penh;Laos>Vientiane;Myanmar>Naypyidaw;Malaysia>Kuala Lumpur;Philippines>Manila;Mongolia>Ulaanbaatar;Kazakhstan>Astana;Uzbekistan>Tashkent;Afghanistan>Kabul;Iran>Tehran;Iraq>Baghdad;Saudi Arabia>Riyadh;Jordan>Amman;Lebanon>Beirut;Syria>Damascus;Qatar>Doha;United Arab Emirates>Abu Dhabi;Kuwait>Kuwait City;Oman>Muscat;Yemen>Sanaa;Bhutan>Thimphu;Egypt>Cairo;Morocco>Rabat;Algeria>Algiers;Tunisia>Tunis;Libya>Tripoli;Nigeria>Abuja;Ghana>Accra;Kenya>Nairobi;Ethiopia>Addis Ababa;Tanzania>Dodoma;Uganda>Kampala;Rwanda>Kigali;Senegal>Dakar;Ivory Coast>Yamoussoukro;Cameroon>Yaounde;Angola>Luanda;Zambia>Lusaka;Zimbabwe>Harare;Mozambique>Maputo;Madagascar>Antananarivo;Namibia>Windhoek;Botswana>Gaborone;Sudan>Khartoum;Somalia>Mogadishu;South Africa>Pretoria;DR Congo>Kinshasa;United States>Washington, D.C./Washington;Canada>Ottawa;Mexico>Mexico City;Cuba>Havana;Jamaica>Kingston;Guatemala>Guatemala City;Panama>Panama City;Costa Rica>San Jose;Colombia>Bogota;Venezuela>Caracas;Ecuador>Quito;Peru>Lima;Chile>Santiago;Argentina>Buenos Aires;Uruguay>Montevideo;Paraguay>Asuncion;Brazil>Brasilia;Haiti>Port-au-Prince;Dominican Republic>Santo Domingo;Australia>Canberra;New Zealand>Wellington;Fiji>Suva;Papua New Guinea>Port Moresby';
+    const COUNTRIES = [...new Set(CAPS.split(';').map(r => r.split('>')[0]).concat(['Singapore', 'Indonesia', 'Israel', 'Sri Lanka', 'Bolivia', 'Other']))].sort();
+
+    const DATA = [
+      ['Geography','Easy','What is the capital of {s}?','The capital of {s} is {a}.',CAPS],
+      ['Geography','Medium','What is the currency of {s}?','The currency of {s} is the {a}.','Japan>Yen;United Kingdom>Pound sterling/Pound;United States>US dollar/Dollar;India>Indian rupee/Rupee;China>Yuan/Renminbi;South Korea>Won;Russia>Ruble;Brazil>Real;Mexico>Mexican peso;Switzerland>Swiss franc/Franc;Sweden>Krona;Norway>Krone;Poland>Zloty;Turkey>Lira;Thailand>Baht;Vietnam>Dong;South Africa>Rand;Nigeria>Naira;Egypt>Egyptian pound;Saudi Arabia>Riyal;Israel>Shekel;Hungary>Forint;Czechia>Koruna;Malaysia>Ringgit;Philippines>Philippine peso;Bangladesh>Taka;Ukraine>Hryvnia;Kenya>Kenyan shilling;Canada>Canadian dollar;Australia>Australian dollar;Peru>Sol;Cambodia>Riel;Ghana>Cedi;Morocco>Moroccan dirham/Dirham;Argentina>Argentine peso'],
+      ['Geography','Easy','On which continent is {s}?','{s} is in {a}.','Japan>Asia;Brazil>South America;Kenya>Africa;Canada>North America;Australia>Oceania;Peru>South America;Vietnam>Asia;Nigeria>Africa;Norway>Europe;Chile>South America;Mexico>North America;Thailand>Asia;Poland>Europe;Morocco>Africa;India>Asia;Argentina>South America;New Zealand>Oceania;Cuba>North America;Italy>Europe;Ghana>Africa'],
+      ['Geography','Easy','In which country is {s}?','{s} is in {a}.','the Eiffel Tower>France;Machu Picchu>Peru;the Colosseum>Italy;the Taj Mahal>India;the Great Pyramid of Giza>Egypt;Angkor Wat>Cambodia;Petra>Jordan;Mount Kilimanjaro>Tanzania;Christ the Redeemer>Brazil;the Sydney Opera House>Australia;the Acropolis>Greece;Mount Fuji>Japan;Chichen Itza>Mexico;the Alhambra>Spain;Neuschwanstein Castle>Germany;Hagia Sophia>Turkey;Table Mountain>South Africa;Ha Long Bay>Vietnam;the Petronas Towers>Malaysia;the Burj Khalifa>United Arab Emirates;the Great Wall>China;Stonehenge>United Kingdom;the Louvre>France;Uluru>Australia'],
+      ['Geography','Medium','Which is {s}?','{a} is {s}.','the longest river in Africa>Nile;the largest desert in Africa>Sahara;the highest mountain above sea level>Mount Everest;the deepest lake in the world>Lake Baikal;the largest country by area>Russia;the smallest country by area>Vatican City;the largest island that is not a continent>Greenland;the largest ocean>Pacific Ocean;the longest mountain range on land>The Andes/Andes;the deepest ocean trench>Mariana Trench;the largest lake by surface area>Caspian Sea;the tallest waterfall>Angel Falls;the largest rainforest>Amazon rainforest/Amazon;the largest coral reef system>Great Barrier Reef'],
+      ['Geography','Medium','What is the main official language of {s}?','The main official language of {s} is {a}.','Brazil>Portuguese;Japan>Japanese;Egypt>Arabic;Iran>Persian/Farsi;Turkey>Turkish;Netherlands>Dutch;Poland>Polish;Sweden>Swedish;Greece>Greek;Thailand>Thai;Vietnam>Vietnamese;Hungary>Hungarian;Argentina>Spanish;Ethiopia>Amharic;Indonesia>Indonesian;Israel>Hebrew;Finland>Finnish;Czechia>Czech;Iceland>Icelandic;Ukraine>Ukrainian;Romania>Romanian;Bangladesh>Bengali/Bangla;Cambodia>Khmer;Mongolia>Mongolian;Philippines>Filipino;Denmark>Danish;Norway>Norwegian;Angola>Portuguese'],
+      ['Science','Medium','What is the chemical formula of {s}?','The chemical formula of {s} is {a}.','water>H2O;table salt>NaCl;carbon dioxide>CO2;methane>CH4;ammonia>NH3;hydrogen peroxide>H2O2;glucose>C6H12O6;sulfuric acid>H2SO4;hydrochloric acid>HCl;ozone>O3;baking soda>NaHCO3;limestone (calcium carbonate)>CaCO3;ethanol>C2H5OH;nitric acid>HNO3;carbon monoxide>CO;caustic soda (sodium hydroxide)>NaOH'],
+      ['Science','Easy','Which planet is {s}?','{a} is {s}.','known as the Red Planet>Mars;known as the Ringed Planet>Saturn;the closest to the Sun>Mercury;the hottest>Venus;the one that rotates on its side>Uranus;the windiest>Neptune;the largest>Jupiter'],
+      ['Science','Medium','Who is credited with {s}?','{a} is credited with {s}.','the theory of general relativity>Albert Einstein;the laws of motion and universal gravitation>Isaac Newton;the theory of evolution by natural selection>Charles Darwin;discovering penicillin>Alexander Fleming;discovering the electron>J. J. Thomson;discovering polonium and radium>Marie Curie;the first polio vaccine>Jonas Salk;the heliocentric model>Nicolaus Copernicus;observing the moons of Jupiter>Galileo Galilei;the periodic table>Dmitri Mendeleev;the uncertainty principle>Werner Heisenberg;discovering the neutron>James Chadwick;discovering X-rays>Wilhelm Rontgen;electromagnetic induction>Michael Faraday;the smallpox vaccine>Edward Jenner;the three laws of planetary motion>Johannes Kepler;pasteurization>Louis Pasteur;the laws of inheritance from pea plants>Gregor Mendel'],
+      ['Science','Medium','What is the SI unit of {s}?','The SI unit of {s} is the {a}.','force>Newton;energy>Joule;power>Watt;electric current>Ampere;frequency>Hertz;pressure>Pascal;electrical resistance>Ohm;electric charge>Coulomb;magnetic flux density>Tesla;luminous intensity>Candela;amount of substance>Mole;temperature>Kelvin;capacitance>Farad;inductance>Henry;radioactivity>Becquerel'],
+      ['Science','Easy','Which organ is responsible for {s}?','The {a} is responsible for {s}.','pumping blood>Heart;filtering blood to make urine>Kidney;gas exchange in humans>Lungs;producing insulin>Pancreas;producing bile and detoxifying blood>Liver;thought and processing sensory information>Brain'],
+      ['Science','Easy','{s}?','The answer to "{s}?" is {a}.','How many bones are in the adult human body>206;How many chromosomes do humans normally have>46;How many planets are in the Solar System>8;What is the boiling point of water at sea level in degrees Celsius>100;How many hearts does an octopus have>3;How many legs does a spider have>8;What is the freezing point of water in degrees Fahrenheit>32;How many teeth does a typical adult have>32;How many continents are there>7;How many colors are in a rainbow>7;How many sides does a hexagon have>6;How many degrees are in a right angle>90;How many chambers does the human heart have>4;How many moons does Mars have>2;How many letters are in the English alphabet>26;How many days are in a leap year>366'],
+      ['History','Medium','In which year did this happen: {s}?','{s} in {a}.','World War II ended>1945;World War I began>1914;The French Revolution began>1789;The Berlin Wall fell>1989;Apollo 11 landed on the Moon>1969;The Titanic sank>1912;Columbus first reached the Americas>1492;The Magna Carta was sealed>1215;The United States Declaration of Independence was adopted>1776;The Soviet Union dissolved>1991;The first iPhone was released>2007;The Chernobyl disaster occurred>1986;The Western Roman Empire fell>476;Napoleon was defeated at Waterloo>1815;The Wright brothers made their first powered flight>1903;The United Nations was founded>1945;The Russian Revolution took place>1917;The Great Fire of London occurred>1666;India gained independence>1947;Nelson Mandela became president of South Africa>1994;Sputnik 1 was launched>1957;The Wall Street Crash occurred>1929;The Cuban Missile Crisis took place>1962;The Battle of Hastings was fought>1066;The American Civil War began>1861;The Meiji Restoration began>1868;The euro was launched as a currency>1999'],
+      ['History','Easy','Who was {s}?','{a} was {s}.','the first person to walk on the Moon>Neil Armstrong;the British Prime Minister for most of World War II>Winston Churchill;the first Roman Emperor>Augustus;the leader of the Bolshevik Revolution>Vladimir Lenin;the founder of the Mongol Empire>Genghis Khan;the Egyptian queen who allied with Julius Caesar and Mark Antony>Cleopatra;the French general crowned Emperor in 1804>Napoleon Bonaparte;the 16th President of the United States>Abraham Lincoln;the first female Prime Minister of the United Kingdom>Margaret Thatcher;the leader of India non-violent independence movement>Mahatma Gandhi;the Carthaginian general who crossed the Alps with elephants>Hannibal;the Macedonian king who conquered the Persian Empire>Alexander the Great;the first President of the United States>George Washington;the founder of the People Republic of China in 1949>Mao Zedong;the navigator who reached the Americas in 1492 for Spain>Christopher Columbus;the first European to sail to India by sea>Vasco da Gama;the first woman to win a Nobel Prize>Marie Curie'],
+      ['Literature','Medium','Who wrote "{s}"?','{a} wrote "{s}".','Pride and Prejudice>Jane Austen;Moby-Dick>Herman Melville;War and Peace>Leo Tolstoy;Hamlet>William Shakespeare;The Great Gatsby>F. Scott Fitzgerald;Don Quixote>Miguel de Cervantes;The Odyssey>Homer;Crime and Punishment>Fyodor Dostoevsky;One Hundred Years of Solitude>Gabriel Garcia Marquez;The Hobbit>J. R. R. Tolkien/JRR Tolkien;Frankenstein>Mary Shelley;Les Miserables>Victor Hugo;The Divine Comedy>Dante Alighieri;To Kill a Mockingbird>Harper Lee;Brave New World>Aldous Huxley;Animal Farm>George Orwell;The Catcher in the Rye>J. D. Salinger;Jane Eyre>Charlotte Bronte;Wuthering Heights>Emily Bronte;A Tale of Two Cities>Charles Dickens;Ulysses>James Joyce;The Trial>Franz Kafka;The Little Prince>Antoine de Saint-Exupery;Things Fall Apart>Chinua Achebe;Beloved>Toni Morrison;Norwegian Wood>Haruki Murakami;The Alchemist>Paulo Coelho;The Stranger>Albert Camus;Lolita>Vladimir Nabokov;Dracula>Bram Stoker;Harry Potter and the Philosophers Stone>J. K. Rowling/JK Rowling;The Old Man and the Sea>Ernest Hemingway;Faust>Johann Wolfgang von Goethe;Candide>Voltaire;Lord of the Flies>William Golding;Fahrenheit 451>Ray Bradbury;Dune>Frank Herbert;Neuromancer>William Gibson'],
+      ['Art','Medium','Who painted "{s}"?','{a} painted "{s}".','Mona Lisa>Leonardo da Vinci;The Starry Night>Vincent van Gogh;The Persistence of Memory>Salvador Dali;Guernica>Pablo Picasso;The Scream>Edvard Munch;Girl with a Pearl Earring>Johannes Vermeer;The Night Watch>Rembrandt;The Birth of Venus>Sandro Botticelli;The Kiss>Gustav Klimt;Water Lilies>Claude Monet;American Gothic>Grant Wood;Las Meninas>Diego Velazquez;The Creation of Adam>Michelangelo;The Garden of Earthly Delights>Hieronymus Bosch;Liberty Leading the People>Eugene Delacroix;The Great Wave off Kanagawa>Hokusai;Campbells Soup Cans>Andy Warhol;The Arnolfini Portrait>Jan van Eyck'],
+      ['Music','Medium','Who composed "{s}"?','{a} composed "{s}".','Symphony No. 9 (Choral)>Ludwig van Beethoven;The Four Seasons>Antonio Vivaldi;The Magic Flute>Wolfgang Amadeus Mozart;Swan Lake>Pyotr Tchaikovsky;The Brandenburg Concertos>Johann Sebastian Bach;Bolero>Maurice Ravel;The Rite of Spring>Igor Stravinsky;Rhapsody in Blue>George Gershwin;The Blue Danube>Johann Strauss II;Carmen>Georges Bizet;La Traviata>Giuseppe Verdi;The Planets>Gustav Holst;Clair de Lune>Claude Debussy;Messiah>George Frideric Handel;The Ring Cycle>Richard Wagner'],
+      ['Movies','Medium','Who directed {s}?','{a} directed {s}.','Inception>Christopher Nolan;Jaws>Steven Spielberg;Pulp Fiction>Quentin Tarantino;Parasite>Bong Joon-ho;The Godfather>Francis Ford Coppola;Psycho>Alfred Hitchcock;Spirited Away>Hayao Miyazaki;Titanic>James Cameron;Pans Labyrinth>Guillermo del Toro;2001: A Space Odyssey>Stanley Kubrick;Seven Samurai>Akira Kurosawa;Goodfellas>Martin Scorsese;Lost in Translation>Sofia Coppola;Blade Runner>Ridley Scott;Get Out>Jordan Peele;Roma>Alfonso Cuaron'],
+      ['Technology','Medium','Who created {s}?','{a} created {s}.','the Python programming language>Guido van Rossum;the Linux kernel>Linus Torvalds;the World Wide Web>Tim Berners-Lee;the C programming language>Dennis Ritchie;JavaScript>Brendan Eich;the Java programming language>James Gosling;Bitcoin>Satoshi Nakamoto;the C++ language>Bjarne Stroustrup;the Ruby language>Yukihiro Matsumoto;the concept of the Turing machine>Alan Turing;the design of the Analytical Engine>Charles Babbage;the Rust language>Graydon Hoare'],
+      ['Technology','Easy','What does {s} stand for?','{s} stands for {a}.','CPU>Central Processing Unit;RAM>Random Access Memory;HTML>HyperText Markup Language;HTTP>HyperText Transfer Protocol;URL>Uniform Resource Locator;USB>Universal Serial Bus;GPU>Graphics Processing Unit;SQL>Structured Query Language;DNS>Domain Name System;CSS>Cascading Style Sheets;PDF>Portable Document Format;LAN>Local Area Network;VPN>Virtual Private Network;SSD>Solid State Drive;IP>Internet Protocol;JSON>JavaScript Object Notation;API>Application Programming Interface;ROM>Read-Only Memory;GPS>Global Positioning System;OCR>Optical Character Recognition;PNG>Portable Network Graphics'],
+      ['Sports','Easy','{s}?','The answer to "{s}?" is {a}.','How many players per team are on the pitch in a soccer match>11;How many players per team are on court in basketball>5;How many rings are on the Olympic flag>5;How many holes are in a standard round of golf>18;How many points is a touchdown worth before the extra point>6;How many players per side are on court in volleyball>6;How many minutes are in a regulation soccer match>90;How many Grand Slam tennis tournaments are there each year>4;How many players per side are on the field in rugby union>15;How many innings are in a standard baseball game>9;How many strings does a standard guitar have>6;How many keys does a standard piano have>88'],
+      ['Sports','Easy','Which sport features {s}?','{s} is a feature of {a}.','a shuttlecock>Badminton;a puck>Ice hockey;a wicket>Cricket;a scrum>Rugby;a birdie>Golf;a slam dunk>Basketball;a touchdown>American football;a pommel horse>Gymnastics;a bullseye>Darts;a love score>Tennis;a knockout>Boxing;a strike>Bowling'],
+      ['Nature','Easy','What is a baby {s} called?','A baby {s} is called a {a}.','cow>calf;dog>puppy;cat>kitten;horse>foal;sheep>lamb;goat>kid;duck>duckling;kangaroo>joey;swan>cygnet;frog>tadpole;deer>fawn;bear>cub;pig>piglet;goose>gosling;eagle>eaglet'],
+      ['Nature','Medium','What is a group of {s} called?','A group of {s} is called a {a}.','crows>murder;owls>parliament;lions>pride;whales>pod;wolves>pack;fish>school;bees>swarm;ravens>unkindness;flamingos>flamboyance;giraffes>tower'],
+      ['Food','Easy','Which country is the origin of {s}?','{s} originates from {a}.','sushi>Japan;paella>Spain;pizza>Italy;tacos>Mexico;kimchi>South Korea;pad thai>Thailand;haggis>Scotland;poutine>Canada;goulash>Hungary;pho>Vietnam;feta>Greece;bratwurst>Germany;ceviche>Peru;biryani>India;gelato>Italy;pierogi>Poland']
+    ];
+    DATA.forEach(d => pairs(...d));
+
+    // Chemical elements (name/symbol/atomic number), easier for the first 20
+    const EN = 'Hydrogen Helium Lithium Beryllium Boron Carbon Nitrogen Oxygen Fluorine Neon Sodium Magnesium Aluminium/Aluminum Silicon Phosphorus Sulfur/Sulphur Chlorine Argon Potassium Calcium Scandium Titanium Vanadium Chromium Manganese Iron Cobalt Nickel Copper Zinc Gallium Germanium Arsenic Selenium Bromine Krypton Rubidium Strontium Yttrium Zirconium Niobium Molybdenum Technetium Ruthenium Rhodium Palladium Silver Cadmium Indium Tin Antimony Tellurium Iodine Xenon Caesium/Cesium Barium Tungsten Platinum Gold Mercury Lead Radon Uranium Plutonium'.split(' ');
+    const ES = 'H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba W Pt Au Hg Pb Rn U Pu'.split(' ');
+    const EZ = [...Array(56)].map((_, i) => i + 1).concat([74, 78, 79, 80, 82, 86, 92, 94]);
+    [[0, 20, 'Easy'], [20, EN.length, 'Medium']].forEach(([a, b, d]) => {
+      const sl = f => EN.slice(a, b).map((n, i) => f(n, ES[a + i], EZ[a + i])).join(';');
+      pairs('Science', d, 'What is the chemical symbol for {s}?', 'The chemical symbol for {s} is {a}.', sl((n, s) => n + '>' + s));
+      pairs('Science', d, 'Which element has the chemical symbol {s}?', '{s} is the chemical symbol for {a}.', sl((n, s) => s + '>' + n));
+      pairs('Science', d === 'Easy' ? 'Medium' : 'Hard', 'What is the atomic number of {s}?', 'The atomic number of {s} is {a}.', sl((n, s, z) => n + '>' + z));
+    });
+
+    // Procedural Math & Logic (fresh numbers each page load)
+    const P = (d, expr, verb, ans, dis) => add('Math & Logic', d, `What is ${expr}?`, x => `${cap(expr)} ${verb} ${x}.`, String(ans), dis || (() => near(+ans, 3)), [String(ans)]);
+    const MATH = [
+      () => { const a = 2 + rnd(18), b = 2 + rnd(18); return [a < 13 && b < 13 ? 'Easy' : 'Medium', `${a} × ${b}`, '=', a * b]; },
+      () => { const a = 100 + rnd(900), b = 100 + rnd(900); return ['Medium', `${a} + ${b}`, '=', a + b]; },
+      () => { const a = 200 + rnd(800), b = 50 + rnd(150); return ['Medium', `${a} − ${b}`, '=', a - b]; },
+      () => { const n = 2 + rnd(29); return [n < 13 ? 'Easy' : 'Medium', `the square root of ${n * n}`, 'is', n]; },
+      () => { const n = 11 + rnd(20); return ['Medium', `${n} squared`, 'is', n * n]; },
+      () => { const p = [10, 15, 20, 25, 40, 50, 75][rnd(7)], n = 20 * (1 + rnd(30)); return ['Medium', `${p}% of ${n}`, 'is', p * n / 100]; },
+      () => { const n = 1 + rnd(63); return ['Hard', `the decimal value of binary ${n.toString(2)}`, 'is', n]; },
+      () => { const n = 5 + rnd(60); return ['Hard', `${n} written in binary`, 'is', n.toString(2), () => near(n, 3).map(v => (+v).toString(2))]; },
+      () => { const n = 1 + rnd(400); return ['Medium', `the Roman numeral ${roman(n)} as a number`, 'is', n]; },
+      () => { const n = 4 + rnd(96); return ['Medium', `${n} written in Roman numerals`, 'is', roman(n), () => near(n, 3).map(roman)]; },
+      () => { const a = 1 + rnd(20), d = 2 + rnd(9), s = [0, 1, 2, 3].map(i => a + d * i); return ['Medium', `the next number in the sequence ${s.join(', ')}, …`, 'is', a + 4 * d]; },
+      () => { const a = 1 + rnd(4), r = 2 + rnd(3), s = [0, 1, 2, 3].map(i => a * r ** i); return ['Hard', `the next number in the sequence ${s.join(', ')}, …`, 'is', a * r ** 4]; }
+    ];
+    MATH.forEach(g => { const seen = new Set(); for (let i = 0; i < 28; i++) { const r = g(); if (!seen.has(r[1])) { seen.add(r[1]); P(...r); } } });
+
+    /* ==========================================================================
+       4. APPLICATION CORE ENGINE
+       ========================================================================== */
+    class QuizApp {
+      constructor() {
+        this.audio = new AudioEngine();
+        this.confetti = new Confetti();
+
+        // Game State
+        this.currentMode = 'standard'; // 'standard' | 'timeAttack' | 'survival'
+        this.activeQuestions = [];
+        this.currentIndex = 0;
+        this.score = 0;
+        this.streak = 0;
+        this.bestStreakInSession = 0;
+        this.lives = 3;
+        this.timer = null;
+        this.timeLeft = 0;
+        this.userAnswers = []; // Store responses for review
+
+        // Player Cumulative Stats
+        this.stats = this.loadStats();
+
+        // Keyboard navigation setup
+        this.setupKeyboardListeners();
+      }
+
+      loadStats() {
+        const defaultStats = {
+          totalGames: 0,
+          totalQuestions: 0,
+          correctAnswers: 0,
+          totalScore: 0,
+          highestStreak: 0,
+          categories: {}
+        };
+        try {
+          const saved = localStorage.getItem('trivia_iq_stats');
+          return saved ? Object.assign(defaultStats, JSON.parse(saved)) : defaultStats;
+        } catch(e) {
+          return defaultStats;
+        }
+      }
+
+      saveStats() {
+        try {
+          localStorage.setItem('trivia_iq_stats', JSON.stringify(this.stats));
+        } catch(e) {
+          console.error('Failed to save to localStorage:', e);
+        }
+      }
+
+      toggleTheme() {
+        document.documentElement.classList.toggle('dark');
+        this.audio.playClick();
+      }
+
+      toggleSound() {
+        this.audio.enabled = !this.audio.enabled;
+        const icon = document.getElementById('sound-icon');
+        if (this.audio.enabled) {
+          icon.className = 'fa-solid fa-volume-high';
+          this.showToast('Sound enabled');
+        } else {
+          icon.className = 'fa-solid fa-volume-xmark';
+          this.showToast('Sound muted');
+        }
+      }
+
+      showToast(msg) {
+        const toast = document.getElementById('toast');
+        const msgEl = document.getElementById('toast-message');
+        msgEl.innerText = msg;
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        setTimeout(() => {
+          toast.classList.add('translate-y-20', 'opacity-0');
+        }, 2200);
+      }
+
+      switchView(viewId) {
+        ['view-home', 'view-quiz', 'view-summary', 'view-stats', 'view-ranks'].forEach(id => {
+          document.getElementById(id).classList.add('hidden');
+        });
+        document.getElementById(viewId).classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      showHome() {
+        this.stopTimer();
+        this.switchView('view-home');
+      }
+
+      showStats() {
+        this.stopTimer();
+        this.renderStatsView();
+        this.switchView('view-stats');
+      }
+
+      /* Quiz Setup */
+      startQuiz(mode) {
+        this.audio.playClick();
+        this.currentMode = mode;
+        this.currentIndex = 0;
+        this.score = 0;
+        this.streak = 0;
+        this.bestStreakInSession = 0;
+        this.lives = 3;
+        this.userAnswers = [];
+
+        // Shuffle & filter questions
+        let pool = this.buildPool();
+
+        if (mode === 'standard') {
+          this.activeQuestions = pool.slice(0, 10);
+        } else if (mode === 'timeAttack') {
+          this.activeQuestions = pool; // Continuous list
+          this.timeLeft = 60;
+          this.startTimer();
+        } else if (mode === 'survival') {
+          this.activeQuestions = pool;
+        }
+
+        this.updateHeaderUI();
+        this.switchView('view-quiz');
+        this.renderQuestion();
+      }
+
+      startTimer() {
+        this.stopTimer();
+        const timerText = document.getElementById('quiz-timer-text');
+        
+        this.timer = setInterval(() => {
+          this.timeLeft--;
+          const mins = Math.floor(this.timeLeft / 60);
+          const secs = this.timeLeft % 60;
+          timerText.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+          if (this.timeLeft <= 0) {
+            this.stopTimer();
+            this.finishQuiz();
+          }
+        }, 1000);
+      }
+
+      stopTimer() {
+        if (this.timer) {
+          clearInterval(this.timer);
+          this.timer = null;
+        }
+      }
+
+      updateHeaderUI() {
+        const livesContainer = document.getElementById('quiz-lives-container');
+        const timerContainer = document.getElementById('quiz-timer-container');
+
+        if (this.currentMode === 'survival') {
+          livesContainer.classList.remove('hidden');
+          livesContainer.classList.add('flex');
+          timerContainer.classList.add('hidden');
+          document.getElementById('quiz-lives-count').innerText = this.lives;
+        } else if (this.currentMode === 'timeAttack') {
+          livesContainer.classList.add('hidden');
+          timerContainer.classList.remove('hidden');
+          document.getElementById('quiz-timer-text').innerText = '01:00';
+        } else {
+          livesContainer.classList.add('hidden');
+          timerContainer.classList.add('hidden');
+        }
+
+        document.getElementById('quiz-score-count').innerText = this.score;
+        document.getElementById('quiz-streak-count').innerText = this.streak;
+      }
+
+      renderQuestion() {
+        // If reached end of questions in pool
+        if (this.currentIndex >= this.activeQuestions.length) {
+          this.finishQuiz();
+          return;
+        }
+
+        const q = this.activeQuestions[this.currentIndex];
+
+        // Hide explanation box
+        document.getElementById('quiz-explanation-box').classList.add('hidden');
+
+        // Update Badges & Headers
+        document.getElementById('quiz-category-badge').innerHTML = `<i class="fa-solid fa-tag"></i> ${q.category}`;
+        document.getElementById('quiz-difficulty-badge').innerText = q.difficulty;
+
+        // Difficulty Color Coding
+        const diffBadge = document.getElementById('quiz-difficulty-badge');
+        diffBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold uppercase ';
+        if (q.difficulty === 'Easy') diffBadge.classList.add('bg-emerald-500/10', 'text-emerald-600', 'dark:text-emerald-400');
+        else if (q.difficulty === 'Medium') diffBadge.classList.add('bg-amber-500/10', 'text-amber-600', 'dark:text-amber-400');
+        else diffBadge.classList.add('bg-rose-500/10', 'text-rose-600', 'dark:text-rose-400');
+
+        // Update Question Text
+        document.getElementById('quiz-question-text').innerText = `${this.currentIndex + 1}. ${q.type === 'tf' ? 'True or False? ' : ''}${q.question}`;
+
+        // Progress Bar
+        const total = this.currentMode === 'standard' ? 10 : this.activeQuestions.length;
+        const progressPct = Math.round(((this.currentIndex) / total) * 100);
+        document.getElementById('quiz-progress-text').innerText = `Question ${this.currentIndex + 1} of ${total}`;
+        document.getElementById('quiz-percentage-text').innerText = `${progressPct}%`;
+        document.getElementById('quiz-progress-bar').style.width = `${progressPct}%`;
+
+        // Render Options
+        const optionsContainer = document.getElementById('quiz-options-container');
+        optionsContainer.innerHTML = '';
+        this.answered = false;
+        document.getElementById('quiz-id-container').classList.toggle('hidden', q.type !== 'id');
+        if (q.type === 'id') {
+          const inp = document.getElementById('quiz-id-input'); inp.value = ''; inp.disabled = false;
+          setTimeout(() => inp.focus(), 50); return;
+        }
+        if (q.type === 'mc') { q.options = shuffle(q.options); q.answer = q.options.indexOf(q.ansText); }
+
+        q.options.forEach((opt, idx) => {
+          const btn = document.createElement('button');
+          btn.className = `option-btn w-full p-4 rounded-xl text-left border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all font-medium text-slate-800 dark:text-slate-200 flex items-center justify-between group`;
+          btn.onclick = () => this.handleAnswer(idx);
+          btn.innerHTML = `
+            <span class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center text-xs font-bold group-hover:bg-brand-500 group-hover:text-white transition">
+                ${String.fromCharCode(65 + idx)}
+              </span>
+              <span class="text-sm sm:text-base">${opt}</span>
+            </span>
+            <i class="fa-solid fa-circle-check opacity-0 text-emerald-500 text-lg transition-opacity"></i>
+          `;
+          optionsContainer.appendChild(btn);
+        });
+      }
+
+      handleAnswer(selectedIndex) {
+        if (this.answered) return; this.answered = true;
+        const q = this.activeQuestions[this.currentIndex];
+        const isId = q.type === 'id';
+        const isCorrect = isId ? matches(selectedIndex, q.accept) : selectedIndex === q.answer;
+        const selText = isId ? String(selectedIndex).trim() : q.options[selectedIndex];
+        const corrText = isId ? q.accept[0] : q.options[q.answer];
+        if (isId) { const inp = document.getElementById('quiz-id-input'); inp.disabled = true; inp.blur(); }
+        const options = document.querySelectorAll('.option-btn');
+
+        // Disable all option buttons
+        options.forEach(btn => btn.onclick = null);
+
+        // Record response
+        this.userAnswers.push({
+          question: q.question,
+          category: q.category,
+          selText, corrText,
+          explanation: q.explanation,
+          isCorrect
+        });
+
+        // Highlights
+        options.forEach((btn, idx) => {
+          if (idx === q.answer) {
+            btn.classList.remove('bg-white/60', 'dark:bg-slate-900/60', 'border-slate-200', 'dark:border-slate-800');
+            btn.classList.add('bg-emerald-500/10', 'border-emerald-500', 'text-emerald-700', 'dark:text-emerald-400');
+          } else if (idx === selectedIndex && !isCorrect) {
+            btn.classList.remove('bg-white/60', 'dark:bg-slate-900/60', 'border-slate-200', 'dark:border-slate-800');
+            btn.classList.add('bg-rose-500/10', 'border-rose-500', 'text-rose-700', 'dark:text-rose-400');
+          }
+        });
+
+        // Logic & Audio
+        if (isCorrect) {
+          this.audio.playCorrect();
+          this.score += 100 + (this.streak * 20); // Streak multiplier
+          this.streak++;
+          if (this.streak > this.bestStreakInSession) {
+            this.bestStreakInSession = this.streak;
+          }
+        } else {
+          this.audio.playIncorrect();
+          this.streak = 0;
+
+          if (this.currentMode === 'survival') {
+            this.lives--;
+            document.getElementById('quiz-lives-count').innerText = this.lives;
+          }
+        }
+
+        this.updateHeaderUI();
+
+        // Show Explanation
+        const expBox = document.getElementById('quiz-explanation-box');
+        const expTitle = document.getElementById('quiz-explanation-title');
+        const expText = document.getElementById('quiz-explanation-text');
+
+        expBox.classList.remove('hidden');
+        if (isCorrect) {
+          expTitle.className = 'font-bold flex items-center gap-2 text-emerald-600 dark:text-emerald-400';
+          expTitle.innerHTML = `<i class="fa-solid fa-circle-check"></i> Correct Answer!`;
+        } else {
+          expTitle.className = 'font-bold flex items-center gap-2 text-rose-600 dark:text-rose-400';
+          expTitle.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Incorrect`;
+        }
+
+        expText.innerText = (isId && !isCorrect ? `Answer: ${corrText}. ` : '') + q.explanation;
+      }
+
+      nextQuestion() {
+        this.audio.playClick();
+
+        if (this.currentMode === 'survival' && this.lives <= 0) {
+          this.finishQuiz();
+          return;
+        }
+
+        this.currentIndex++;
+        if (this.currentMode === 'standard' && this.currentIndex >= 10) {
+          this.finishQuiz();
+        } else {
+          this.renderQuestion();
+        }
+      }
+
+      finishQuiz() {
+        this.stopTimer();
+
+        // Save session stats to cumulative local storage
+        const totalAnswered = this.userAnswers.length;
+        const correctCount = this.userAnswers.filter(a => a.isCorrect).length;
+        const accuracyPct = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+
+        this.stats.totalGames++;
+        this.stats.totalQuestions += totalAnswered;
+        this.stats.correctAnswers += correctCount;
+        this.stats.totalScore += this.score;
+        if (this.bestStreakInSession > this.stats.highestStreak) {
+          this.stats.highestStreak = this.bestStreakInSession;
+        }
+
+        // Category breakdown updates
+        this.userAnswers.forEach(ans => {
+          if (!this.stats.categories[ans.category]) {
+            this.stats.categories[ans.category] = { total: 0, correct: 0 };
+          }
+          this.stats.categories[ans.category].total++;
+          if (ans.isCorrect) this.stats.categories[ans.category].correct++;
+        });
+
+        this.saveStats();
+
+        // Trigger celebratory confetti if accuracy is high
+        if (accuracyPct >= 70) {
+          this.confetti.fire();
+        }
+
+        // Update Summary UI
+        document.getElementById('summary-final-score').innerText = this.score;
+        document.getElementById('summary-accuracy').innerText = `${accuracyPct}%`;
+        document.getElementById('summary-best-streak').innerText = this.bestStreakInSession;
+        document.getElementById('summary-correct-ratio').innerText = `${correctCount}/${totalAnswered}`;
+
+        const badgeIcon = document.getElementById('summary-badge-icon');
+        const feedbackText = document.getElementById('summary-feedback-text');
+
+        if (accuracyPct >= 90) {
+          badgeIcon.className = 'fa-solid fa-crown text-amber-500';
+          feedbackText.innerText = 'Legendary Performance! You are a true Trivia Master.';
+        } else if (accuracyPct >= 70) {
+          badgeIcon.className = 'fa-solid fa-trophy text-brand-500';
+          feedbackText.innerText = 'Great job! You have impressive general knowledge.';
+        } else {
+          badgeIcon.className = 'fa-solid fa-graduation-cap text-indigo-500';
+          feedbackText.innerText = 'Nice effort! Practice makes perfect—try another round!';
+        }
+
+        this.submitScore();
+        this.renderReviewList();
+        this.switchView('view-summary');
+      }
+
+      renderReviewList() {
+        const container = document.getElementById('summary-review-container');
+        container.innerHTML = '';
+
+        this.userAnswers.forEach((ans, idx) => {
+          const card = document.createElement('div');
+          card.className = `p-4 rounded-xl border ${ans.isCorrect ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-rose-500/30 bg-rose-500/5'} space-y-2 text-left text-xs sm:text-sm`;
+          card.innerHTML = `
+            <div class="flex justify-between items-center font-bold">
+              <span class="${ans.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
+                Q${idx + 1}: ${ans.isCorrect ? '<i class="fa-solid fa-check"></i> Correct' : '<i class="fa-solid fa-xmark"></i> Incorrect'}
+              </span>
+              <span class="text-slate-400 font-normal">${ans.category}</span>
+            </div>
+            <p class="font-semibold text-slate-800 dark:text-slate-200">${ans.question}</p>
+            <p class="text-slate-600 dark:text-slate-400">
+              <span class="font-medium">Your Answer:</span> ${esc(ans.selText) || 'No answer'}
+            </p>
+            ${!ans.isCorrect ? `<p class="text-emerald-600 dark:text-emerald-400"><span class="font-medium">Correct Answer:</span> ${esc(ans.corrText)}</p>` : ''}
+            <p class="text-slate-500 text-xs italic bg-slate-200/50 dark:bg-slate-800/50 p-2 rounded-lg">${ans.explanation}</p>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      toggleReviewSection() {
+        const reviewSec = document.getElementById('summary-review-section');
+        reviewSec.classList.toggle('hidden');
+      }
+
+      shareResults() {
+        const text = `🧠 Trivia IQ Score: ${this.score} pts | Mode: ${this.currentMode.toUpperCase()} | Can you beat me?`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text);
+          this.showToast('Results copied to clipboard!');
+        } else {
+          this.showToast('Sharing not supported on this browser.');
+        }
+      }
+
+      renderStatsView() {
+        document.getElementById('stats-total-games').innerText = this.stats.totalGames;
+        document.getElementById('stats-total-score').innerText = this.stats.totalScore;
+        document.getElementById('stats-highest-streak').innerText = this.stats.highestStreak;
+
+        const overallPct = this.stats.totalQuestions > 0 ? Math.round((this.stats.correctAnswers / this.stats.totalQuestions) * 100) : 0;
+        document.getElementById('stats-overall-accuracy').innerText = `${overallPct}%`;
+
+        // Render Category Progress Bars
+        const catContainer = document.getElementById('stats-category-bars');
+        catContainer.innerHTML = '';
+
+        const categories = Object.keys(this.stats.categories);
+        if (categories.length === 0) {
+          catContainer.innerHTML = `<p class="text-xs text-slate-500">No quiz data recorded yet. Play a game to see stats!</p>`;
+          return;
+        }
+
+        categories.forEach(cat => {
+          const data = this.stats.categories[cat];
+          const pct = Math.round((data.correct / data.total) * 100);
+
+          const barWrapper = document.createElement('div');
+          barWrapper.className = 'space-y-1';
+          barWrapper.innerHTML = `
+            <div class="flex justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <span>${cat}</span>
+              <span>${pct}% (${data.correct}/${data.total})</span>
+            </div>
+            <div class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-brand-500 rounded-full" style="width: ${pct}%"></div>
+            </div>
+          `;
+          catContainer.appendChild(barWrapper);
+        });
+      }
+
+      resetStats() {
+        if (confirm('Are you sure you want to reset all your stats? This cannot be undone.')) {
+          localStorage.removeItem('trivia_iq_stats');
+          this.stats = this.loadStats();
+          this.renderStatsView();
+          this.showToast('Stats reset successfully');
+        }
+      }
+
+      setupKeyboardListeners() {
+        document.addEventListener('keydown', (e) => {
+          const quizView = document.getElementById('view-quiz');
+          if (quizView.classList.contains('hidden')) return;
+          if (e.target.tagName === 'INPUT') { if (e.key === 'Enter') this.submitId(); return; }
+
+          if (['1', '2', '3', '4'].includes(e.key)) {
+            const index = parseInt(e.key) - 1;
+            const options = document.querySelectorAll('.option-btn');
+            if (options[index]) options[index].click();
+          } else if (e.key === 'Enter') {
+            const nextBtn = document.getElementById('quiz-next-btn');
+            const expBox = document.getElementById('quiz-explanation-box');
+            if (!expBox.classList.contains('hidden')) {
+              this.nextQuestion();
+            }
+          }
+        });
+      }
+    }
+
+    /* ==========================================================================
+       5. PROFILE, FILTERS & LEADERBOARDS
+       Paste your Firebase Realtime Database URL below to make Global / Country /
+       Daily / Weekly rankings shared between all players. Leave it empty to keep
+       scores on this device only (with demo players).
+       ========================================================================== */
+    const FIREBASE_DB_URL = 'https://trivia-c4-default-rtdb.asia-southeast1.firebasedatabase.app';
+    Object.assign(QuizApp.prototype, {
+      initUI() {
+        const opt = (v, l) => `<option value="${esc(v)}">${esc(l ?? v)}</option>`;
+        document.getElementById('f-cat').innerHTML = opt('', 'All categories') + [...new Set(QUESTION_BANK.map(q => q.category))].sort().map(c => opt(c)).join('');
+        document.getElementById('pf-country').innerHTML = opt('', 'Select country...') + COUNTRIES.map(c => opt(c)).join('');
+        const p = this.profile(); document.getElementById('pf-name').value = p.name || ''; document.getElementById('pf-country').value = p.country || '';
+        document.getElementById('bank-count').innerText = QUESTION_BANK.length.toLocaleString();
+        this.rk = { scope: 'global', period: 'daily' };
+        if (FIREBASE_DB_URL) document.getElementById('rk-demo').parentElement.classList.add('hidden'); else this.seedDemo();
+      },
+      buildPool() {
+        const c = document.getElementById('f-cat').value, t = document.getElementById('f-type').value;
+        const list = QUESTION_BANK.filter(q => (!c || q.category === c) && (!t || q.type === t) && (t || q.type !== 'tf' || Math.random() < .5));
+        if (c) return shuffle(list);
+        const g = {}; shuffle(list).forEach(q => (g[q.category] = g[q.category] || []).push(q));
+        const cols = shuffle(Object.values(g)), out = [];   // round-robin so every category appears
+        while (out.length < list.length) cols.forEach(col => col.length && out.push(col.pop()));
+        return out;
+      },
+      submitId() { const v = document.getElementById('quiz-id-input').value; if (v.trim() && !this.answered) this.handleAnswer(v); },
+      profile() { try { return JSON.parse(localStorage.getItem('trivia_iq_profile')) || {}; } catch (e) { return {}; } },
+      saveProfile() {
+        const name = document.getElementById('pf-name').value.trim().slice(0, 16), country = document.getElementById('pf-country').value;
+        try { localStorage.setItem('trivia_iq_profile', JSON.stringify({ name, country })); } catch (e) {}
+      },
+      localLb() { try { return JSON.parse(localStorage.getItem('trivia_iq_lb')) || []; } catch (e) { return []; } },
+      seedDemo() {
+        try { if (localStorage.getItem('trivia_iq_lb_seeded')) return; } catch (e) { return; }
+        const N = 'Aiko,Liam,Sofia,Mateo,Priya,Chen,Fatima,Noah,Olga,Kwame,Yuki,Emma,Lucas,Ana,Omar,Ines,Raj,Mia,Jonas,Zara,Kenji,Lea,Diego,Nia'.split(','), C = ['Japan', 'United States', 'Brazil', 'India', 'Germany', 'Philippines', 'Nigeria', 'France'], e = [];
+        N.forEach((n, i) => { for (let k = 0; k < 8; k++) e.push({ name: n, country: C[i % C.length], score: 200 + rnd(2300), ts: Date.now() - rnd(k < 3 ? 20 * 36e5 : 14 * 864e5), demo: true }); });
+        try { localStorage.setItem('trivia_iq_lb', JSON.stringify(e)); localStorage.setItem('trivia_iq_lb_seeded', '1'); } catch (x) {}
+      },
+      submitScore() {
+        if (!this.score) return;
+        const p = this.profile(), e = { name: p.name || 'Guest', country: p.country || 'Unknown', score: this.score, mode: this.currentMode, ts: Date.now() };
+        const all = this.localLb(); all.push(e);
+        try { localStorage.setItem('trivia_iq_lb', JSON.stringify(all.slice(-2000))); } catch (x) {}
+        if (FIREBASE_DB_URL) {
+          fetch(`${FIREBASE_DB_URL.replace(/\/$/, '')}/scores.json`, { method: 'POST', body: JSON.stringify({ ...e, ts: { '.sv': 'timestamp' } }) })
+            .then(r => this.showToast(r.ok ? 'Score posted to the leaderboard!' : 'Could not post score online'))
+            .catch(() => this.showToast('Offline: score saved on this device only'));
+        }
+      },
+      async entries(t) {
+        if (FIREBASE_DB_URL) {
+          try {
+            const q = t ? `orderBy=%22ts%22&startAt=${t}&limitToLast=1000` : 'orderBy=%22score%22&limitToLast=1000';
+            const r = await fetch(`${FIREBASE_DB_URL.replace(/\/$/, '')}/scores.json?${q}`);
+            if (!r.ok) throw 0;
+            return Object.values((await r.json()) || {});
+          } catch (e) { this.showToast('Could not reach the online leaderboard'); }
+        }
+        return this.localLb();
+      },
+      since(p) { const d = new Date(); d.setHours(0, 0, 0, 0); if (p === 'daily') return +d; if (p === 'weekly') { d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return +d; } return 0; },
+      showRanks() { this.stopTimer(); this.switchView('view-ranks'); this.renderRanks(); },
+      setRank(k, v) { this.rk[k] = v; this.audio.playClick(); this.renderRanks(); },
+      async renderRanks() {
+        const { scope, period } = this.rk, pf = this.profile(), demo = document.getElementById('rk-demo').checked, t = this.since(period);
+        document.querySelectorAll('.rk-tab').forEach(b => { const on = this.rk[b.dataset.k] === b.dataset.v; b.classList.toggle('bg-brand-600', on); b.classList.toggle('text-white', on); b.classList.toggle('bg-slate-200', !on); b.classList.toggle('dark:bg-slate-800', !on); });
+        const best = {};
+        (await this.entries(t)).filter(e => e.ts >= t && (demo || !e.demo)).forEach(e => { const k = e.name + '|' + e.country; if (!best[k] || e.score > best[k].score) best[k] = e; });
+        const myName = pf.name || 'Guest', myCountry = pf.country || 'Unknown';
+        let list = Object.values(best), head, rows, myIdx = -1, msg = '';
+        if (scope === 'countries') {
+          const c = {}; list.forEach(e => { (c[e.country] = c[e.country] || { country: e.country, score: 0, n: 0 }).score += e.score; c[e.country].n++; });
+          list = Object.values(c).sort((a, b) => b.score - a.score); head = ['Country', 'Players', 'Total'];
+          rows = list.map(c => ({ me: c.country === myCountry, c: [esc(c.country), c.n, c.score] }));
+          myIdx = list.findIndex(c => c.country === myCountry);
+        } else {
+          if (scope === 'country') { if (!pf.country) msg = 'Pick your country on the home screen to see your country board.'; list = list.filter(e => e.country === pf.country); }
+          list.sort((a, b) => b.score - a.score); head = ['Player', 'Country', 'Best score'];
+          rows = list.map(e => ({ me: e.name === myName && e.country === myCountry, c: [esc(e.name) + (e.demo ? ' <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 font-normal">demo</span>' : ''), esc(e.country), e.score] }));
+          myIdx = rows.findIndex(r => r.me);
+        }
+        document.getElementById('rk-me').innerText = msg || (myIdx >= 0 ? `Your rank: #${myIdx + 1} of ${rows.length}` : 'No score from you in this period yet. Play a round!');
+        document.getElementById('rk-table').innerHTML = rows.length
+          ? `<table class="w-full text-sm"><thead><tr class="text-left text-xs text-slate-500"><th class="p-3">#</th>${head.map((h, i) => `<th class="p-3${i === 2 ? ' text-right' : ''}">${h}</th>`).join('')}</tr></thead><tbody>${rows.slice(0, 20).map((r, i) => `<tr class="border-t border-slate-200 dark:border-slate-800 ${r.me ? 'bg-brand-500/10 font-bold' : ''}"><td class="p-3">${i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1}</td>${r.c.map((c, j) => `<td class="p-3${j === 2 ? ' text-right font-mono' : ''}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+          : '<p class="p-6 text-center text-sm text-slate-500">No scores on this board yet.</p>';
+      }
+    });
+
+    // Initialize Global App Controller
+    let app;
+    window.addEventListener('DOMContentLoaded', () => {
+      app = new QuizApp();
+      app.initUI();
+    });
+  </script>
+</body>
+</html>
